@@ -1,0 +1,36 @@
+# Archivos de configuración sensibles
+backend/config/env.php
+backend/config/db.php
+
+# Archivos temporales y de desarrollo
+*.log
+*.tmp
+*.cache
+.DS_Store
+Thumbs.db
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos de dependencias (si usas Composer)
+vendor/
+composer.lock
+
+# Archivos de uploads (opcional - si no quieres subir las fotos)
+backend/uploads/*.jpg
+backend/uploads/*.jpeg
+backend/uploads/*.png
+backend/uploads/*.gif
+
+# Archivos de backup
+*.bak
+*.backup
+
+# Archivos de sesión PHP
+*.sess
+
+# Archivos de error
+error_log 

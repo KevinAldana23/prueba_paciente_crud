@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SIHOS - Sistema de Gestión de Pacientes Hospitalarios">
+    <meta name="author" content="Desarrollador">
+    <title>SIHOS - Gestión de Pacientes</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Estilos personalizados -->
+    <style>
+        /* ========================================
+         * ESTILOS GENERALES
+         * ======================================== */
+        
+        /* Header con gradiente */
+        .header-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        /* Tarjetas con sombra */
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: none;
+            border-radius: 10px;
+        }
+        
+        /* Botones primarios con gradiente */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            transform: translateY(-1px);
+        }
+        
+        /* Encabezados de tabla */
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        /* Caja de búsqueda con icono */
+        .search-box {
+            position: relative;
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        
+        .search-box input {
+            padding-left: 45px;
+        }
+        
+        /* Encabezado del modal */
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        /* Alertas con bordes redondeados */
+        .alert {
+            border-radius: 10px;
+        }
+        
+        /* Paginación centrada */
+        .pagination {
+            justify-content: center;
+        }
+        
+        /* Indicador de carga */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        /* Foto del paciente */
+        .patient-photo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* Etiquetas de formulario */
+        .form-label {
+            font-weight: 600;
+        }
+
+        /* Campos requeridos */
+        .required::after {
+            content: " *";
+            color: red;
+        }
+
+        /* Botón de cerrar sesión */
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- ========================================
+     * ENCABEZADO PRINCIPAL
+     * ======================================== -->
+    <header class="header-bg">
+        <div class="container">
+            <div class="row align-items-center">
+                <!-- Título y descripción -->
+                <div class="col-md-6">
+                    <h1 class="mb-0">
+                        <i class="fas fa-user-injured me-3"></i>
+                        SIHOS - Sistema de Gestión de Pacientes
+                    </h1>
+                    <p class="mb-0 mt-2">Administración de pacientes del sistema hospitalario</p>
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-light btn-lg me-2" data-bs-toggle="modal" data-bs-target="#pacienteModal" onclick="limpiarFormulario()">
+                        <i class="fas fa-plus me-2"></i>Nuevo Paciente
+                    </button>
+                    <button class="btn logout-btn btn-lg" onclick="logout()">
+                        <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========================================
+     * CONTENIDO PRINCIPAL
+     * ======================================== -->
+    <main class="container">
+        <!-- Contenedor de alertas -->
+        <div id="alertContainer"></div>
+
+        <!-- ========================================
+         * SECCIÓN DE BÚSQUEDA Y FILTROS
+         * ======================================== -->
+        <section class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <!-- Campo de búsqueda -->
+                    <div class="col-md-6">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" class="form-control" id="searchInput" 
+                                   placeholder="Buscar por nombre, apellido, documento o correo...">
+                        </div>
+                    </div>
+                    
+                    <!-- Selector de elementos por página -->
+                    <div class="col-md-3">
+                        <select class="form-select" id="perPageSelect">
+                            <option value="5">5 por página</option>
+                            <option value="10" selected>10 por página</option>
+                            <option value="25">25 por página</option>
+                            <option value="50">50 por página</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Botón de exportar -->
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-primary w-100" onclick="exportarPacientes()">
+                            <i class="fas fa-download me-2"></i>Exportar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================
+         * TABLA DE PACIENTES
+         * ======================================== -->
+        <section class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Lista de Pacientes
+                    <span class="badge bg-primary ms-2" id="totalPacientes">0</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Indicador de carga -->
+                <div class="loading" id="loadingSpinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-2">Cargando pacientes...</p>
+                </div>
+
+                <!-- Tabla responsiva -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Foto</th>
+                                <th>Documento</th>
+                                <th>Nombres</th>
+                                <th>Apellidos</th>
+                                <th>Género</th>
+                                <th>Ubicación</th>
+                                <th>Correo</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pacientesTableBody">
+                            <!-- Los datos se cargarán dinámicamente aquí -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                <nav aria-label="Paginación de pacientes">
+                    <ul class="pagination" id="pagination">
+                        <!-- La paginación se generará dinámicamente aquí -->
+                    </ul>
+                </nav>
+            </div>
+        </section>
+    </main>
+
+    <!-- ========================================
+     * MODAL DE PACIENTE (CREAR/EDITAR)
+     * ======================================== -->
+    <div class="modal fade" id="pacienteModal" tabindex="-1" aria-labelledby="pacienteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <!-- Encabezado del modal -->
+                <div class="modal-header">
+                    <h5 class="modal-title" id="pacienteModalLabel">
+                        <i class="fas fa-user-plus me-2"></i>Nuevo Paciente
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <!-- Cuerpo del modal -->
+                <div class="modal-body">
+                    <form id="pacienteForm">
+                        <!-- Campo oculto para ID del paciente -->
+                        <input type="hidden" id="pacienteId">
+                        
+                        <!-- Información del documento -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="tipoDocumento" class="form-label required">Tipo de Documento</label>
+                                    <select class="form-select" id="tipoDocumento" required>
+                                        <option value="">Seleccionar...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="numeroDocumento" class="form-label required">Número de Documento</label>
+                                    <input type="text" class="form-control" id="numeroDocumento" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nombres -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="nombre1" class="form-label required">Primer Nombre</label>
+                                    <input type="text" class="form-control" id="nombre1" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="nombre2" class="form-label">Segundo Nombre</label>
+                                    <input type="text" class="form-control" id="nombre2">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Apellidos -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="apellido1" class="form-label required">Primer Apellido</label>
+                                    <input type="text" class="form-control" id="apellido1" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="apellido2" class="form-label">Segundo Apellido</label>
+                                    <input type="text" class="form-control" id="apellido2">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Género y correo -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="genero" class="form-label required">Género</label>
+                                    <select class="form-select" id="genero" required>
+                                        <option value="">Seleccionar...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="correo" class="form-label">Correo Electrónico</label>
+                                    <input type="email" class="form-control" id="correo">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ubicación -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="departamento" class="form-label required">Departamento</label>
+                                    <select class="form-select" id="departamento" required>
+                                        <option value="">Seleccionar...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="municipio" class="form-label required">Municipio</label>
+                                    <select class="form-select" id="municipio" required>
+                                        <option value="">Seleccionar...</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Subida de foto -->
+                        <div class="mb-3">
+                            <label for="foto" class="form-label">Foto del Paciente</label>
+                            <input type="file" class="form-control" id="foto" accept="image/*">
+                            <div class="form-text">Opcional: Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 2MB</div>
+                            <div id="fotoPreview"></div>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Pie del modal -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="guardarPaciente()">
+                        <i class="fas fa-save me-2"></i>Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+     * MODAL DE CONFIRMACIÓN DE ELIMINACIÓN
+     * ======================================== -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <!-- Encabezado del modal -->
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteModalLabel">
+                        <i class="fas fa-trash me-2"></i>Confirmar Eliminación
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <!-- Cuerpo del modal -->
+                <div class="modal-body">
+                    <p>¿Está seguro de que desea eliminar este paciente?</p>
+                    <p class="text-danger"><strong>Esta acción no se puede deshacer.</strong></p>
+                </div>
+                
+                <!-- Pie del modal -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmarEliminar()">
+                        <i class="fas fa-trash me-2"></i>Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+     * SCRIPTS
+     * ======================================== -->
+    
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Script principal de la aplicación -->
+    <script src="script.js"></script>
+</body>
+</html>
